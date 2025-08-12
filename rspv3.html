@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Камък-ножица-хартия с разширени анимации</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f0f4f8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        padding: 20px;
+        transition: background-color 0.7s ease;
+    }
+    h1 {
+        color: #333;
+    }
+    .choices {
+        margin: 20px 0;
+    }
+    button {
+        font-size: 18px;
+        padding: 10px 20px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #4a90e2;
+        color: white;
+        transition: background 0.3s ease, transform 0.3s ease;
+    }
+    button:hover {
+        background: #357ABD;
+    }
+    button.pulse {
+        animation: pulse 0.4s ease;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+    .result {
+        margin-top: 30px;
+        font-size: 20px;
+        min-height: 80px;
+        color: #555;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .result.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .stats {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+        text-align: center;
+    }
+    .reset-btn {
+        margin-top: 25px;
+        background: #e94e77;
+    }
+    .reset-btn:hover {
+        background: #d0365a;
+    }
+</style>
+</head>
+<body>
+<h1>Игра: Камък - Ножица - Хартия</h1>
+<div class="choices">
+    <button onclick="play('камък', this)">Камък 🪨</button>
+    <button onclick="play('ножица', this)">Ножица ✂️</button>
+    <button onclick="play('хартия', this)">Хартия 📄</button>
+</div>
+<div class="result" id="result"></div>
+<div class="stats" id="stats">
+    Твойте победи: 0<br>
+    Победи на компютъра: 0<br>
+    Рундове изиграни: 0
+</div>
+<button class="reset-btn" onclick="resetGame()">Нова игра</button>
+
+<script>
+    let userWins = 0;
+    let computerWins = 0;
+    let rounds = 0;
+    const maxWins = 4;
+
+    // Зареждане на звуци (отворени ресурси)
+    const soundClick = new Audio('https://actions.google.com/sounds/v1/buttons/button_press.mp3');
+    const soundWin = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+    const soundLose = new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg');
+    const soundDraw = new Audio('https://actions.google.com/sounds/v1/cartoon/boing.ogg');
+
+    function play(userChoice, buttonElem) {
+        if (userWins >= maxWins || computerWins >= maxWins) {
+            return; // играта е приключила
+        }
+
+        // Звук при клик
+        soundClick.currentTime = 0;
+        soundClick.play();
+
+        // Анимация на бутона - пулсиране
+        buttonElem.classList.add('pulse');
+        setTimeout(() => {
+            buttonElem.classList.remove('pulse');
+        }, 400);
+
+        const choices = ['камък', 'ножица', 'хартия'];
+        const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+
+        let resultText = `Ти избра: ${userChoice}. Компютърът избра: ${computerChoice}. `;
+
+        // Цветови ефекти
+        const body = document.body;
+
+        if (userChoice === computerChoice) {
+            resultText += "Равенство! 🤝";
+            soundDraw.play();
+            body.style.backgroundColor = '#fff3cd'; // жълто
+        } else if (
+            (userChoice === 'камък' && computerChoice === 'ножица') ||
+            (userChoice === 'ножица' && computerChoice === 'хартия') ||
+            (userChoice === 'хартия' && computerChoice === 'камък')
+        ) {
+            userWins++;
+            resultText += "Ти печелиш този рунд! 🎉";
+            soundWin.play();
+            body.style.backgroundColor = '#d4edda'; // зелено
+        } else {
+            computerWins++;
+            resultText += "Компютърът печели този рунд! 💻";
+            soundLose.play();
+            body.style.backgroundColor = '#f8d7da'; // червено
+        }
+
+        rounds++;
+
+        // Обновяване на резултатите
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerText = resultText;
+
+        // Показваме резултата с анимация
+        resultDiv.classList.remove('visible');
+        void resultDiv.offsetWidth; // trigger reflow
+        resultDiv.classList.add('visible');
+
+        document.getElementById('stats').innerHTML =
+            `Твойте победи: ${userWins}<br>` +
+            `Победи на компютъра: ${computerWins}<br>` +
+            `Рундове изиграни: ${rounds}`;
+
+        // Връщаме фон към нормален след 2.5 секунди
+        setTimeout(() => {
+            body.style.backgroundColor = '#f0f4f8';
+        }, 2500);
+
+        // Проверка за край на мача
+        if (userWins === maxWins) {
+            resultDiv.innerText += "\n🎉 Поздравления! Ти спечели мача! 🏆";
+        } else if (computerWins === maxWins) {
+            resultDiv.innerText += "\n💻 Компютърът спечели мача! Опитай пак!";
+        }
+    }
+
+    function resetGame() {
+        userWins = 0;
+        computerWins = 0;
+        rounds = 0;
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerText = "";
+        resultDiv.classList.remove('visible');
+        document.getElementById('stats').innerHTML =
+            `Твойте победи: 0<br>` +
+            `Победи на компютъра: 0<br>` +
+            `Рундове изиграни: 0`;
+        document.body.style.backgroundColor = '#f0f4f8';
+    }
+</script>
+</body>
+</html>
